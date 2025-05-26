@@ -34,25 +34,39 @@ async function ensureAuthQuietly() {
     return auth;
 }
 server.setRequestHandler(ListResourcesRequestSchema, async (request) => {
-    await ensureAuthQuietly();
-    const pageSize = 10;
+    await ensureAuth();
+    const pageSize = 100;
     const params = {
+        corpora: "allDrives",
+        q: "trashed = false", // Only list non-trashed files
+        orderBy: "modifiedTime desc", // Order by last modified time
         pageSize,
+        includeItemsFromAllDrives: true,
+        supportsAllDrives: true,
         fields: "nextPageToken, files(id, name, mimeType)",
     };
     if (request.params?.cursor) {
         params.pageToken = request.params.cursor;
     }
-    const res = await drive.files.list(params);
-    const files = res.data.files;
-    return {
-        resources: files.map((file) => ({
-            uri: `gdrive:///${file.id}`,
-            mimeType: file.mimeType,
-            name: file.name,
-        })),
-        nextCursor: res.data.nextPageToken,
-    };
+    try {
+        const res = await drive.files.list(params);
+        const files = res.data.files;
+        if (!res.data.files || res.data.files.length === 0) {
+            return { resources: [], nextCursor: null };
+        }
+        return {
+            resources: files.map((file) => ({
+                uri: `gdrive:///${file.id}`,
+                mimeType: file.mimeType,
+                name: file.name,
+            })),
+            nextCursor: res.data.nextPageToken,
+        };
+    }
+    catch (error) {
+        console.error("Error listing resources:", error);
+        throw new Error("Failed to list Google Drive resources: " + (error instanceof Error ? `: ${error.cause} \n ${error.name} \n ${error.stack}` : ""));
+    }
 });
 server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     await ensureAuthQuietly();

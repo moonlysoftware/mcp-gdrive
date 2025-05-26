@@ -137,16 +137,28 @@ export async function loadCredentialsQuietly() {
   }
 }
 
-// Get valid credentials, prompting for auth if necessary
-export async function getValidCredentials(forceAuth = false) {
-  if (!forceAuth) {
-    const quietAuth = await loadCredentialsQuietly();
-    if (quietAuth) {
-      return quietAuth;
-    }
+// Loads credentials from environment variable and returns an authenticated OAuth2 client
+export function getAuthClientFromEnv() {
+  const credsJson = process.env.GDRIVE_CREDENTIALS;
+  if (!credsJson) {
+    throw new Error("GDRIVE_CREDENTIALS environment variable not set.");
   }
 
-  return await authenticateAndSaveCredentials();
+  let creds;
+  try {
+    creds = typeof credsJson === "string" ? JSON.parse(credsJson) : credsJson;
+  } catch (e) {
+    throw new Error("Failed to parse GDRIVE_CREDENTIALS: " + (e as Error).message);
+  }
+
+  const oauth2Client = new google.auth.OAuth2();
+  oauth2Client.setCredentials(creds);
+  return oauth2Client;
+}
+
+// Example usage: get a valid OAuth2 client for Google APIs
+export async function getValidCredentials() {
+  return getAuthClientFromEnv();
 }
 
 // Background refresh that never prompts for auth

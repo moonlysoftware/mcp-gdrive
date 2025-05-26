@@ -7,11 +7,11 @@ export const schema = {
         properties: {
             query: {
                 type: "string",
-                description: "Search query",
+                description: "Search query for files and folders in Google Drive. trashed files are excluded by default. Use 'trashed = true' to include trashed files."
             },
             pageToken: {
                 type: "string",
-                description: "Token for the next page of results",
+                description: "Token for the next page of results. Use if there are more results than can fit on one page. If not provided, the first page of results will be returned. Make sure the query is the same as the one used to get the token.",
                 optional: true,
             },
             pageSize: {
@@ -25,29 +25,22 @@ export const schema = {
 };
 export async function search(args) {
     const drive = google.drive("v3");
-    const userQuery = args.query.trim();
+    const userQuery = args.query?.trim();
     let searchQuery = "";
-    // If query is empty, list all files
-    if (!userQuery) {
-        searchQuery = "trashed = false";
+    if (!userQuery?.includes("trashed = true")) {
+        searchQuery = `(${userQuery}) and trashed = false`;
     }
     else {
-        // Escape special characters in the query
-        const escapedQuery = userQuery.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-        // Build search query with multiple conditions
-        const conditions = [];
-        // Search in title
-        conditions.push(`name contains '${escapedQuery}'`);
-        // If specific file type is mentioned in query, add mimeType condition
-        if (userQuery.toLowerCase().includes("sheet")) {
-            conditions.push("mimeType = 'application/vnd.google-sheets.spreadsheet'");
-        }
-        searchQuery = `(${conditions.join(" or ")}) and trashed = false`;
+        searchQuery = userQuery;
     }
     const res = await drive.files.list({
         q: searchQuery,
         pageSize: args.pageSize || 10,
         pageToken: args.pageToken,
+        corpora: "allDrives",
+        spaces: "drive",
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
         orderBy: "modifiedTime desc",
         fields: "nextPageToken, files(id, name, mimeType, modifiedTime, size)",
     });
@@ -55,9 +48,10 @@ export async function search(args) {
         ?.map((file) => `${file.id} ${file.name} (${file.mimeType})`)
         .join("\n");
     let response = `Found ${res.data.files?.length ?? 0} files:\n${fileList}`;
+    response += `\n\nSearch query: '${searchQuery || "All files"}'`;
     // Add pagination info if there are more results
     if (res.data.nextPageToken) {
-        response += `\n\nMore results available. Use pageToken: ${res.data.nextPageToken}`;
+        response += `\n\nMore results available. Use pageToken: '${res.data.nextPageToken}' to fetch the next page.`;
     }
     return {
         content: [

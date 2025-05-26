@@ -30,6 +30,7 @@ async function readGoogleDriveFile(fileId) {
     // First get file metadata to check mime type
     const file = await drive.files.get({
         fileId,
+        supportsAllDrives: true,
         fields: "mimeType,name",
     });
     // For Google Docs/Sheets/etc we need to export
@@ -61,7 +62,13 @@ async function readGoogleDriveFile(fileId) {
         };
     }
     // For regular files download content
-    const res = await drive.files.get({ fileId, alt: "media" }, { responseType: "arraybuffer" });
+    const res = await drive.files.get({
+        fileId,
+        alt: "media",
+        supportsAllDrives: true,
+    }, {
+        responseType: "arraybuffer",
+    });
     const mimeType = file.data.mimeType || "application/octet-stream";
     const isText = mimeType.startsWith("text/") || mimeType === "application/json";
     const content = Buffer.from(res.data);

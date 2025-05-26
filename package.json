@@ -1,15 +1,15 @@
 {
-  "name": "@isaacphi/mcp-gdrive",
-  "version": "0.2.0",
+  "name": "@moonlysoftware/mcp-gdrive",
+  "version": "0.0.2",
   "description": "MCP server for interacting with Google Drive and Sheets",
   "license": "MIT",
   "author": "Phil Isaac",
-  "homepage": "https://github.com/isaacphi/mcp-gdrive",
-  "bugs": "https://github.com/isaacphi/mcp-gdrive/issues",
+  "homepage": "https://github.com/moonlysoftware/mcp-gdrive",
+  "bugs": "https://github.com/moonlysoftware/mcp-gdrive/issues",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/isaacphi/mcp-gdrive.git"
+    "url": "git+https://github.com/moonlysoftware/mcp-gdrive.git"
   },
   "keywords": [
     "Google Drive",

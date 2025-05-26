@@ -46,6 +46,7 @@ async function readGoogleDriveFile(
   // First get file metadata to check mime type
   const file = await drive.files.get({
     fileId,
+    supportsAllDrives: true,
     fields: "mimeType,name",
   });
 
@@ -85,8 +86,15 @@ async function readGoogleDriveFile(
 
   // For regular files download content
   const res = await drive.files.get(
-    { fileId, alt: "media" },
-    { responseType: "arraybuffer" },
+    {
+      fileId, 
+      alt: "media",
+      supportsAllDrives: true,
+      
+    },
+    {
+      responseType: "arraybuffer",
+    },
   );
   const mimeType = file.data.mimeType || "application/octet-stream";
   const isText =

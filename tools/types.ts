@@ -21,7 +21,7 @@ export interface InternalToolResponse {
 
 // Input types for each tool
 export interface GDriveSearchInput {
-  query: string;
+  query?: string;
   pageToken?: string;
   pageSize?: number;
 }
